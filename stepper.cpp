@@ -4,26 +4,28 @@ BusOut motor_out(p9, p10, p11, p12);
 
 
 
-
+///constructor, init thread
  Stepper::Stepper(): stepperThread(osPriorityHigh, 1024){ ///priority high moptor has better performance
     this->current_step = 0;
     this->direction = 0;
-    this->accuWaiter = new AccurateWaiter();
+    this->accuWaiter = new AccurateWaiter(); // better timer in thread
     this->pause = true;
 }
 
 
-
+/// start thread
 void Stepper::start(){
     stepperThread.start(
         callback(this, &Stepper::stepperMain));
 }
 
+///main function for thread
 void Stepper::stepperMain(){
     while(1){
         if(!this->pause){
             if(currentMode == manual){
-                rotate();
+                rotate(); /// rotate either left or right dependes on direction variable
+
             }
             else if(currentMode == automatic){
                 dealing();
@@ -68,6 +70,7 @@ void Stepper::rotateRight(){
     accuWaiter->wait_for(1200us);
 }
 
+/// rotate either left or right dependes on direction variable
 void Stepper::rotate(){   
     if(this->direction){
         rotateLeft();
@@ -77,6 +80,7 @@ void Stepper::rotate(){
     }
 };
 
+///rotate and throw a card with geared motor
 void Stepper::dealOnePlayer(){
     for(int i = 0 ; i < this->stepsForOnePlayer; i++){
         rotateRight();
@@ -85,6 +89,7 @@ void Stepper::dealOnePlayer(){
     // accuWaiter->wait_for(1000ms); // timne for dealing card 
 }
 
+/// return to the position of hte first player
 void Stepper::returnToFirstPlayer(){
     for(int i = 0 ; i < playerNum; i++){
         for(int j = 0; j < this->stepsForOnePlayer; j++ ){
@@ -95,11 +100,13 @@ void Stepper::returnToFirstPlayer(){
     accuWaiter->wait_for(1000ms); // timne for dealing card 
 }
 
+///Workflow for automatic dealing mode
 /// Always deal from left to right
 void Stepper::dealing(){
     
     for(int i = 0 ; i < CardPerPile; i++){
         for(int j = 0 ; j < playerNum ; j ++){
+            ///end dealing in the middle
             if(this->pause){
                 currentMode = ModeSelection;
                 displayOptionIndex = 0;
